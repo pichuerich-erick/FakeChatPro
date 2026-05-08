@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FakeChat Pro - Generador de Bromas</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- PayPal Subscriptions SDK -->
+    <!-- Reemplaza "TU_CLIENT_ID_AQUI" con el Client ID de tu App en PayPal Developer -->
+    <script
+        src="https://www.paypal.com/sdk/js?client-id=BAAD3BMtcsNY_5XWh6fdD2UaUBj0pZQkAWRjgNf_RQN0OufjVPL72h7zcYp6AGOEUOmwtHWk1EbxyrQumo&components=hosted-buttons&disable-funding=venmo&currency=USD">
+        </script>
+
+    <style>
+        :root {
+            --wa-bg: #e5ddd5;
+            --wa-header: #075e54;
+            --wa-msg-in: #ffffff;
+            --wa-msg-out: #dcf8c6;
+            --ig-bg: #ffffff;
+            --ms-bg: #ffffff;
+            --ms-blue: #0084ff;
+            --primary: #6366f1;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Panel Lateral de Controles */
+        #sidebar {
+            width: 400px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+        }
+
+        /* Ocultar barra de desplazamiento en sidebar pero permitir scroll */
+        #sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        h2 {
+            color: #111827;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab-menu {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: #f3f4f6;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .tab-btn.active {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: var(--primary);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f3f4f6;
+            padding-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #4b5563;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="password"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        input[type="file"] {
+            font-size: 12px;
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            margin-top: 10px;
+            font-family: inherit;
+        }
+
+        .btn-half {
+            flex: 1;
+        }
+
+        .btn-green {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-green:hover {
+            background: #16a34a;
+        }
+
+        .btn-blue {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-blue:hover {
+            background: #2563eb;
+        }
+
+        .btn-gray {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-gray:hover {
+            background: #d1d5db;
+        }
+
+        .premium-tag {
+            background: #fbbf24;
+            color: #92400e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 5px;
+            font-weight: 800;
+        }
+
+        /* Visualizador del Teléfono */
+        #preview-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e5e7eb;
+            position: relative;
+        }
+
+        #capture-target {
+            width: 375px;
+            height: 750px;
+            /* Pantalla real de iPhone */
+            background: white;
+            border-radius: 40px;
+            border: 12px solid #1f2937;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Simulación del notch o Dynamic Island */
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background: #1f2937;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            z-index: 100;
+        }
+
+        .status-bar-global {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px 5px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 50;
+            position: relative;
+        }
+
+        .status-icons {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        /* --- Estilos WhatsApp --- */
+        .phone-wa .status-bar-global {
+            background: var(--wa-header);
+            color: white;
+        }
+
+        .phone-wa .header {
+            background: var(--wa-header);
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .phone-wa #chat-box {
+            flex: 1;
+            background: var(--wa-bg);
+            padding: 15px;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-size: cover;
+            background-position: center;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .wa-msg {
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            position: relative;
+            max-width: 75%;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+            font-family: 'Roboto', sans-serif;
+            word-wrap: break-word;
+        }
+
+        .wa-msg img {
+            max-width: 100%;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .wa-sent {
+            background: var(--wa-msg-out);
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+
+        .wa-received {
+            background: var(--wa-msg-in);
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+
+        .wa-time {
+            font-size: 11px;
+            color: rgba(0, 0, 0, 0.45);
+            margin-left: 10px;
+            float: right;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .wa-check {
+            color: #34b7f1;
+            font-size: 13px;
+        }
+
+        /* --- Estilos Instagram --- */
+        .phone-ig .status-bar-global {
+            background: white;
+            color: black;
+        }
+
+        .phone-ig .header {
+            background: white;
+            color: black;
+            border-bottom: 1px solid #efefef;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .phone-ig #chat-box {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .ig-msg {
+            border-radius: 20px;
+            padding: 12px 16px;
+            font-size: 14px;
+            max-width: 70%;
+            font-family: 'Inter', sans-serif;
+            word-wrap: break-word;
+        }
+
+        .ig-sent {
+            background: #3797f0;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .ig-received {
+            background: #efefef;
+            color: black;
+            align-self: flex-start;
+        }
+
+        .ig-msg img {
+            max-width: 100%;
+            border-radius: 15px;
+        }
+
+        /* --- Estilos Messenger --- */
+        .phone-ms .status-bar-global {
+            background: white;
+            color: black;
+        }
+
+        .phone-ms .header {
+            background: white;
+            color: black;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .phone-ms #chat-box {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .ms-msg {
+            border-radius: 18px;
+            padding: 10px 14px;
+            font-size: 14.5px;
+            max-width: 65%;
+            font-family: 'Inter', sans-serif;
+            word-wrap: break-word;
+        }
+
+        .ms-sent {
+            background: var(--ms-blue);
+            color: white;
+            align-self: flex-end;
+        }
+
+        .ms-received {
+            background: #f0f2f5;
+            color: black;
+            align-self: flex-start;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #eee;
+        }
+
+        /* Modales */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+        }
+
+        /* Multimedia Section */
+        .gif-results {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .gif-results img {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .gif-results img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Elementos específicos de interfaces */
+        .wa-icons {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .ig-icons {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .ms-icons {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            color: var(--ms-blue);
+            font-size: 1.2rem;
+        }
+
+        .header-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .header-name {
+            font-weight: 600;
+            font-size: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+
+        .header-sub {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .phone-ig .header-name {
+            text-align: center;
+            font-size: 15px;
+        }
+
+        /* Responsive Móvil */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+            }
+
+            #sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+                padding: 15px;
+                box-sizing: border-box;
+            }
+
+            #preview-area {
+                padding: 30px 10px;
+                min-height: 800px;
+                overflow: hidden;
+            }
+
+            #capture-target {
+                transform: scale(0.85);
+                transform-origin: top center;
+                margin-bottom: -110px;
+            }
+        }
+    </style>
+</head>
+
+<body class="phone-wa">
+
+    <div id="sidebar">
+        <h2><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary)"></i> FakeChat Pro</h2>
+
+        <button class="btn-main btn-green" style="margin-bottom: 15px;"
+            onclick="document.getElementById('payment-modal').style.display='flex'">
+            💎 Hazte Premium ($10/mes)
+        </button>
+
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="switchMode('wa')">WhatsApp</button>
+            <button class="tab-btn" onclick="switchMode('ig')">Instagram</button>
+            <button class="tab-btn" onclick="switchMode('ms')">Messenger</button>
+        </div>
+
+        <div class="control-group">
+            <label>Nombre del Contacto</label>
+            <input type="text" id="in-name" value="Mi Crush" oninput="updateUI()">
+
+            <label style="margin-top:10px">Subtítulo (Ej: en línea)</label>
+            <input type="text" id="in-sub" value="en línea" oninput="updateUI()">
+
+            <label style="margin-top:10px">Foto de Perfil</label>
+            <input type="file" id="in-pp" accept="image/*" onchange="loadPP(event)">
+
+            <label style="margin-top:10px">Fondo del Chat</label>
+            <input type="file" id="in-bg" accept="image/*" onchange="loadBg(event)">
+        </div>
+
+        <div class="control-group">
+            <label>Estado del Sistema (iOS)</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input type="number" id="in-battery" value="85" oninput="updateUI()" placeholder="Bat %" max="100"
+                    min="0">
+                <input type="text" id="in-time" value="12:45" oninput="updateUI()" placeholder="Hora">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Nuevo Mensaje de Texto</label>
+            <input type="text" id="in-msg" placeholder="Escribe un mensaje..." onkeypress="handleEnter(event)">
+
+            <label style="font-size:11px; margin-top:10px; display:block;">Estado del mensaje (Envíos WA):</label>
+            <select id="msg-status"
+                style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
+                <option value="read">Visto (Doble Azul)</option>
+                <option value="delivered">Entregado (Doble Gris)</option>
+                <option value="sent">Enviado (Simple Gris)</option>
+                <option value="none">Oculto</option>
+            </select>
+
+            <div style="display: flex; gap: 5px; margin-top: 10px;">
+                <button class="btn-main btn-gray btn-half" onclick="addMsg('received')">Recibido</button>
+                <button class="btn-main btn-green btn-half" onclick="addMsg('sent')">Enviado</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label><i class="fa-solid fa-star" style="color:#fbbf24"></i> Multimedia (Stickers / GIFs) <span
+                    class="premium-tag">PREMIUM</span></label>
+
+            <label style="font-size:11px; margin-top:10px;">Subir Sticker (Imagen Local)</label>
+            <input type="file" id="in-sticker" accept="image/*" onchange="uploadSticker(event)">
+
+            <label style="font-size:11px; margin-top:10px;">Buscar GIF (Giphy API)</label>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="in-gif-search" placeholder="Ej: cat, lol...">
+                <button class="btn-main btn-blue" style="margin-top:0; width:auto; padding: 0 15px;"
+                    onclick="searchGifs()"><i class="fa-solid fa-search"></i></button>
+            </div>
+            <div class="gif-results" id="gif-results"></div>
+
+            <div style="font-size: 11px; margin-top: 10px; color: #666;">
+                La multimedia se enviará como:
+                <select id="media-type" style="padding: 5px; margin-top: 5px; font-size: 11px;">
+                    <option value="sent">Enviado (Derecha)</option>
+                    <option value="received">Recibido (Izquierda)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Nombre de Archivo</label>
+            <input type="text" id="in-filename" value="capturadepantalla">
+            <button class="btn-main btn-blue" onclick="downloadChat()">
+                <i class="fa-solid fa-download"></i> Descargar Captura
+            </button>
+        </div>
+
+        <p style="font-size: 11px; color: #999; text-align: center;">© 2026 FakeChat Pro - Para bromas solamente.</p>
+    </div>
+
+    <div id="preview-area">
+        <div id="capture-target">
+            <div class="notch"></div>
+            <div class="status-bar-global" id="status-bar">
+                <span id="ui-time">12:45</span>
+                <div class="status-icons">
+                    <i class="fa-solid fa-signal" style="font-size: 10px;"></i>
+                    <i class="fa-solid fa-wifi" style="font-size: 10px;"></i>
+                    <span id="ui-battery" style="margin-left:2px;">85%</span>
+                    <i class="fa-solid fa-battery-three-quarters" id="ui-battery-icon" style="font-size: 12px;"></i>
+                </div>
+            </div>
+
+            <!-- Dynamic Header (cambiará según el modo) -->
+            <div class="header" id="dynamic-header">
+                <!-- Por defecto WA -->
+            </div>
+
+            <div id="chat-box">
+                <!-- Burbujas de chat -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Registro -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>🚀 Únete a FakeChat Pro</h3>
+            <p style="font-size:14px; color:#4b5563;">Para descargar tu **primera captura GRATIS** y acceder a funciones
+                Premium (Stickers/GIFs), regístrate.</p>
+            <input type="email" placeholder="Tu correo electrónico" style="margin-bottom:10px">
+            <input type="password" placeholder="Contraseña" style="margin-bottom:20px">
+            <button class="btn-main btn-blue" onclick="closeAuthModal()">Crear Cuenta Gratis</button>
+            <button class="btn-main btn-gray" style="margin-top:5px"
+                onclick="document.getElementById('auth-modal').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Pago -->
+    <div id="payment-modal" class="modal-overlay">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+            <h3>💎 Desbloquea FakeChat Pro</h3>
+            <p style="font-size:14px; color:#4b5563; margin-bottom:5px;">Ya has consumido tu descarga gratuita.
+                Suscríbete por <b>$10.00 USD / mes</b> para obtener descargas ilimitadas y seguir usando stickers/GIFs.
+            </p>
+            <p style="font-size:11px; color:#6b7280; margin-bottom:20px;">* Incluye renovación automática cada mes. Tus
+                datos de pago se guardan de forma segura en PayPal. <b style="color: #4b5563;">Cancela cuando
+                    quieras.</b></p>
+
+            <!-- Contenedor Oficial de Botones de PayPal -->
+            <div id="paypal-container-9NPF5B4HSKTW6"></div>
+            <script>
+                paypal.HostedButtons({
+                    hostedButtonId: "9NPF5B4HSKTW6",
+                }).render("#paypal-container-9NPF5B4HSKTW6")
+            </script>
+
+            <button class="btn-main btn-gray" style="margin-top:10px"
+                onclick="document.getElementById('payment-modal').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'wa';
+        let isRegistered = false;
+        let isPremiumUser = false;
+        let downloadsCount = 0;
+
+        // Headers HTML Templates para ultra realismo
+        const headers = {
+            wa: `
+                <i class="fa-solid fa-arrow-left" style="font-size:18px;"></i>
+                <img src="https://via.placeholder.com/150" id="ui-pp" class="profile-img">
+                <div class="header-content">
+                    <div class="header-name" id="ui-name">Mi Crush</div>
+                    <div class="header-sub" id="ui-sub">en línea</div>
+                </div>
+                <div class="wa-icons">
+                    <i class="fa-solid fa-video"></i>
+                    <i class="fa-solid fa-phone"></i>
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </div>
+            `,
+            ig: `
+                <i class="fa-solid fa-arrow-left" style="font-size:18px;"></i>
+                <div class="header-content" style="align-items:center;">
+                    <div class="header-name" id="ui-name" style="font-weight:700;">Mi Crush</div>
+                    <div class="header-sub" id="ui-sub" style="font-weight:500;">Active 2h ago</div>
+                </div>
+                <div class="ig-icons">
+                    <i class="fa-solid fa-phone"></i>
+                    <i class="fa-solid fa-video"></i>
+                </div>
+            `,
+            ms: `
+                <i class="fa-solid fa-arrow-left" style="color:var(--ms-blue); font-size:18px;"></i>
+                <img src="https://via.placeholder.com/150" id="ui-pp" class="profile-img" style="margin-left:10px;">
+                <div class="header-content" style="margin-left:10px;">
+                    <div class="header-name" id="ui-name" style="font-weight:600; font-size:15px;">Mi Crush</div>
+                    <div class="header-sub" id="ui-sub" style="font-size:11px;">Active now</div>
+                </div>
+                <div class="ms-icons">
+                    <i class="fa-solid fa-phone"></i>
+                    <i class="fa-solid fa-video"></i>
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+            `
+        };
+
+        function renderHeader() {
+            document.getElementById('dynamic-header').innerHTML = headers[currentMode];
+            updateUI(); // Restaurar valores en el nuevo header
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.body.className = 'phone-' + mode;
+
+            // Actualizar botones
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Renderizar cabecera correcta
+            renderHeader();
+
+            // Limpiar chat para evitar incongruencias visuales
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = '';
+            chatBox.style.backgroundImage = '';
+            const bgInput = document.getElementById('in-bg');
+            if (bgInput) bgInput.value = '';
+        }
+
+        function updateUI() {
+            const nameEl = document.getElementById('ui-name');
+            const subEl = document.getElementById('ui-sub');
+            if (nameEl) nameEl.innerText = document.getElementById('in-name').value;
+            if (subEl) subEl.innerText = document.getElementById('in-sub').value;
+
+            document.getElementById('ui-battery').innerText = document.getElementById('in-battery').value + '%';
+            document.getElementById('ui-time').innerText = document.getElementById('in-time').value;
+
+            // Icono batería dinámico
+            const bat = parseInt(document.getElementById('in-battery').value);
+            const batIcon = document.getElementById('ui-battery-icon');
+            if (bat > 80) batIcon.className = "fa-solid fa-battery-full";
+            else if (bat > 50) batIcon.className = "fa-solid fa-battery-three-quarters";
+            else if (bat > 20) batIcon.className = "fa-solid fa-battery-half";
+            else batIcon.className = "fa-solid fa-battery-quarter";
+            if (bat <= 10) batIcon.style.color = "#ef4444";
+            else batIcon.style.color = "inherit";
+        }
+
+        let ppUrl = "https://via.placeholder.com/150"; // Imagen por defecto
+        function loadPP(event) {
+            if (event.target.files[0]) {
+                ppUrl = URL.createObjectURL(event.target.files[0]);
+                const output = document.getElementById('ui-pp');
+                if (output) output.src = ppUrl;
+            }
+        }
+
+        function loadBg(event) {
+            if (event.target.files[0]) {
+                const bgUrl = URL.createObjectURL(event.target.files[0]);
+                const chatBox = document.getElementById('chat-box');
+                chatBox.style.backgroundImage = `url(${bgUrl})`;
+                chatBox.style.backgroundSize = 'cover';
+                chatBox.style.backgroundPosition = 'center';
+            }
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') addMsg('sent');
+        }
+
+        function getCurrentTime() {
+            return document.getElementById('in-time').value;
+        }
+
+        function getWaCheckHtml(isMedia) {
+            const status = document.getElementById('msg-status') ? document.getElementById('msg-status').value : 'read';
+            if (status === 'none') return '';
+
+            const grayColor = isMedia ? '#ffffff' : '#8696a0';
+            const blueColor = '#53bdeb';
+
+            if (status === 'read') {
+                return `<svg viewBox="0 0 16 15" width="16" height="15" style="vertical-align: middle; margin-left: 4px;"><path fill="${blueColor}" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.32.32 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"/></svg>`;
+            } else if (status === 'delivered') {
+                return `<svg viewBox="0 0 16 15" width="16" height="15" style="vertical-align: middle; margin-left: 4px;"><path fill="${grayColor}" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.32.32 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"/></svg>`;
+            } else if (status === 'sent') {
+                return `<svg viewBox="0 0 11 12" width="11" height="12" style="vertical-align: middle; margin-left: 4px;"><path fill="${grayColor}" d="M3.766 11.233L.15 7.616A.499.499 0 0 1 .15 6.91l.883-.883a.499.499 0 0 1 .707 0l2.379 2.379 5.83-5.83a.499.499 0 0 1 .707 0l.883.883a.499.499 0 0 1 0 .707L4.473 11.233a.499.499 0 0 1-.707 0z"/></svg>`;
+            }
+            return '';
+        }
+
+        function createMsgHTML(text, type, isMedia = false) {
+            let html = '';
+            if (currentMode === 'wa') {
+                const checkHtml = type === 'sent' ? getWaCheckHtml(isMedia) : '';
+                if (isMedia) {
+                    html = `${text} <span class="wa-time" style="position:absolute; bottom:5px; right:5px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px;">${getCurrentTime()} ${checkHtml}</span>`;
+                } else {
+                    html = `${text} <span class="wa-time">${getCurrentTime()} ${checkHtml}</span>`;
+                }
+            } else {
+                html = text;
+            }
+            return html;
+        }
+
+        function addMsg(type) {
+            const text = document.getElementById('in-msg').value;
+            if (!text) return;
+            appendMessage(text, type, false);
+            document.getElementById('in-msg').value = '';
+        }
+
+        function appendMessage(content, type, isMedia) {
+            const chat = document.getElementById('chat-box');
+            const msgDiv = document.createElement('div');
+
+            if (currentMode === 'wa') {
+                msgDiv.className = `wa-msg wa-${type}`;
+                if (isMedia) {
+                    msgDiv.style.padding = "2px";
+                    msgDiv.style.background = type === 'sent' ? 'var(--wa-msg-out)' : 'var(--wa-msg-in)';
+                }
+            } else if (currentMode === 'ig') {
+                msgDiv.className = `ig-msg ig-${type}`;
+                if (isMedia) {
+                    msgDiv.style.padding = "0";
+                    msgDiv.style.background = "transparent";
+                }
+            } else if (currentMode === 'ms') {
+                msgDiv.className = `ms-msg ms-${type}`;
+                if (isMedia) {
+                    msgDiv.style.padding = "0";
+                    msgDiv.style.background = "transparent";
+                }
+            }
+
+            msgDiv.innerHTML = createMsgHTML(content, type, isMedia);
+            chat.appendChild(msgDiv);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // --- Lógica Premium / Multimedia --- //
+
+        function checkPremiumAccess() {
+            if (!isRegistered) {
+                document.getElementById('auth-modal').style.display = 'flex';
+                return false;
+            }
+            return true;
+        }
+
+        function uploadSticker(event) {
+            if (!checkPremiumAccess()) {
+                document.getElementById('in-sticker').value = ""; // reset
+                return;
+            }
+
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                const type = document.getElementById('media-type').value;
+                const imgHtml = `<img src="${url}" style="width: 180px; height: auto;">`;
+                appendMessage(imgHtml, type, true);
+            }
+            document.getElementById('in-sticker').value = ""; // reset
+        }
+
+        async function searchGifs() {
+            if (!checkPremiumAccess()) return;
+
+            const query = document.getElementById('in-gif-search').value;
+            if (!query) return;
+
+            const container = document.getElementById('gif-results');
+            container.innerHTML = '<span style="font-size:12px; color:#666;">Buscando...</span>';
+
+            try {
+                // Giphy API Key Pública / Test
+                const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=Pyo4W4mI6oQdGEWw6L5O7uD3WwF2J1fF&q=${query}&limit=6`);
+                const data = await res.json();
+
+                container.innerHTML = '';
+                if (data.data.length === 0) {
+                    container.innerHTML = '<span style="font-size:12px; color:#666;">No hay resultados</span>';
+                    return;
+                }
+
+                data.data.forEach(gif => {
+                    const img = document.createElement('img');
+                    img.src = gif.images.fixed_height_small.url;
+                    img.onclick = () => {
+                        const type = document.getElementById('media-type').value;
+                        const imgHtml = `<img src="${gif.images.fixed_width.url}" style="width: 200px; height: auto;">`;
+                        appendMessage(imgHtml, type, true);
+                    };
+                    container.appendChild(img);
+                });
+            } catch (error) {
+                container.innerHTML = '<span style="font-size:12px; color:red;">Error de API</span>';
+            }
+        }
+
+        // --- Lógica de Descargas y Pagos --- //
+
+        function closeAuthModal() {
+            isRegistered = true;
+            document.getElementById('auth-modal').style.display = 'none';
+            alert("¡Registro exitoso! Tienes 1 descarga GRATIS y acceso a GIFs.");
+        }
+
+        function processPayment() {
+            isPremiumUser = true;
+            document.getElementById('payment-modal').style.display = 'none';
+            alert("¡Suscripción exitosa! Ahora tienes descargas ilimitadas.");
+        }
+
+        // (El renderizado de PayPal ahora se gestiona directamente en el HTML con HostedButtons)
+
+        function downloadChat() {
+            if (!isRegistered) {
+                document.getElementById('auth-modal').style.display = 'flex';
+                return;
+            }
+
+            if (downloadsCount >= 1 && !isPremiumUser) {
+                document.getElementById('payment-modal').style.display = 'flex';
+                return;
+            }
+
+            const fileName = document.getElementById('in-filename').value || 'capturadepantalla';
+            const target = document.getElementById('capture-target');
+
+            // Preparación antes de captura: asegurar que el chat-box no tenga scroll activo visible
+            const originalScroll = target.querySelector('#chat-box').scrollTop;
+
+            html2canvas(target, {
+                useCORS: true,
+                scale: 2,
+                backgroundColor: null
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = fileName + '.jpg';
+                link.href = canvas.toDataURL("image/jpeg", 0.9);
+                link.click();
+
+                downloadsCount++;
+            });
+        }
+
+        // Inicializar
+        renderHeader();
+        updateUI();
+
+    </script>
+</body>
+
+</html>
