@@ -10,6 +10,8 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
 
     <!-- PayPal Subscriptions SDK -->
     <!-- Reemplaza "TU_CLIENT_ID_AQUI" con el Client ID de tu App en PayPal Developer -->
@@ -201,6 +203,26 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        #watermark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250"><text x="50%" y="50%" transform="rotate(-45 125 125)" fill="black" opacity="0.1" font-size="24" font-family="sans-serif" font-weight="bold" text-anchor="middle">VISTA PREVIA</text></svg>');
+            background-repeat: repeat;
+        }
+
+        .wa-emoji {
+            width: 1.3em;
+            height: 1.3em;
+            vertical-align: -0.2em;
+            margin: 0 1px;
+            display: inline-block;
         }
 
         /* Simulación del notch o Dynamic Island */
@@ -599,7 +621,16 @@
 
         <div class="control-group">
             <label>Nuevo Mensaje de Texto</label>
-            <input type="text" id="in-msg" placeholder="Escribe un mensaje..." onkeypress="handleEnter(event)">
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="in-msg" placeholder="Escribe un mensaje..." onkeypress="handleEnter(event)"
+                    style="flex: 1;">
+                <button class="btn-main btn-gray" style="margin-top: 0; width: auto; padding: 0 15px;"
+                    onclick="toggleEmojiPicker(event)">😀</button>
+            </div>
+            <div id="emoji-picker-container"
+                style="display: none; position: absolute; z-index: 1000; margin-top: 5px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; right: 20px;">
+                <emoji-picker></emoji-picker>
+            </div>
 
             <label style="font-size:11px; margin-top:10px; display:block;">Estado del mensaje (Envíos WA):</label>
             <select id="msg-status"
@@ -613,6 +644,13 @@
             <div style="display: flex; gap: 5px; margin-top: 10px;">
                 <button class="btn-main btn-gray btn-half" onclick="addMsg('received')">Recibido</button>
                 <button class="btn-main btn-green btn-half" onclick="addMsg('sent')">Enviado</button>
+            </div>
+
+            <div style="display: flex; gap: 5px; margin-top: 10px;">
+                <button class="btn-main btn-gray btn-half" style="font-size: 11px;" onclick="undoMessage()"><i
+                        class="fa-solid fa-rotate-left"></i> Deshacer</button>
+                <button class="btn-main btn-gray btn-half" style="font-size: 11px;" onclick="clearChat()"><i
+                        class="fa-solid fa-trash"></i> Limpiar</button>
             </div>
         </div>
 
@@ -653,6 +691,7 @@
 
     <div id="preview-area">
         <div id="capture-target">
+            <div id="watermark-overlay"></div>
             <div class="notch"></div>
             <div class="status-bar-global" id="status-bar">
                 <span id="ui-time">12:45</span>
@@ -896,6 +935,17 @@
 
             msgDiv.innerHTML = createMsgHTML(content, type, isMedia);
             chat.appendChild(msgDiv);
+
+            // Reemplazar emojis nativos por emojis estilo Apple (WhatsApp)
+            if (!isMedia) {
+                twemoji.parse(msgDiv, {
+                    base: 'https://unpkg.com/emoji-datasource-apple@15.0.1/img/apple/',
+                    size: '64',
+                    ext: '.png',
+                    className: 'wa-emoji'
+                });
+            }
+
             chat.scrollTop = chat.scrollHeight;
         }
 
@@ -993,11 +1043,18 @@
             // Preparación antes de captura: asegurar que el chat-box no tenga scroll activo visible
             const originalScroll = target.querySelector('#chat-box').scrollTop;
 
+            // Ocultar la marca de agua temporalmente
+            const watermark = document.getElementById('watermark-overlay');
+            if (watermark) watermark.style.display = 'none';
+
             html2canvas(target, {
                 useCORS: true,
                 scale: 2,
                 backgroundColor: null
             }).then(canvas => {
+                // Restaurar marca de agua
+                if (watermark) watermark.style.display = 'block';
+
                 const link = document.createElement('a');
                 link.download = fileName + '.jpg';
                 link.href = canvas.toDataURL("image/jpeg", 0.9);
@@ -1006,6 +1063,51 @@
                 downloadsCount++;
             });
         }
+
+        // --- Lógica Emojis, Deshacer y Limpiar --- //
+
+        function undoMessage() {
+            const chat = document.getElementById('chat-box');
+            if (chat.lastElementChild) {
+                chat.lastElementChild.remove();
+            }
+        }
+
+        function clearChat() {
+            const chat = document.getElementById('chat-box');
+            chat.innerHTML = '';
+        }
+
+        function toggleEmojiPicker(e) {
+            const container = document.getElementById('emoji-picker-container');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Configurar el evento del emoji-picker cuando esté disponible
+            const picker = document.querySelector('emoji-picker');
+            if (picker) {
+                picker.addEventListener('emoji-click', event => {
+                    const input = document.getElementById('in-msg');
+                    input.value += event.detail.unicode;
+                });
+            }
+
+            // Ocultar el selector de emojis al hacer clic fuera de él
+            document.addEventListener('click', (event) => {
+                const container = document.getElementById('emoji-picker-container');
+                if (container && container.style.display === 'block') {
+                    const isClickInside = container.contains(event.target) || event.target.closest('button[onclick="toggleEmojiPicker(event)"]');
+                    if (!isClickInside) {
+                        container.style.display = 'none';
+                    }
+                }
+            });
+        });
 
         // Inicializar
         renderHeader();
